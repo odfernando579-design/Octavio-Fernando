@@ -1,0 +1,3564 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Âncora Patrimonial</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --accent-color: #FFD700;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --sidebar-width: 260px;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #f5f7fb;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Moderna */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background: var(--accent-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .logo-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .nav-menu {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            margin: 5px 15px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 14px 20px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            gap: 15px;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .nav-icon {
+            width: 24px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .nav-text {
+            font-size: 0.95rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        /* Header Moderno */
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* Botões Modernos */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30, 60, 114, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #ff922b);
+            color: #212529;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #fd7e14);
+            color: white;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Stats Cards Modernos */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(30, 60, 114, 0.1), rgba(42, 82, 152, 0.1));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .change-up {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .change-down {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* Cards Modernos */
+        .card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        /* Tabelas Modernas */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        thead {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+
+        thead th {
+            padding: 18px 20px;
+            color: white;
+            font-weight: 600;
+            text-align: left;
+            border: none;
+        }
+
+        thead th:first-child {
+            border-top-left-radius: 12px;
+        }
+
+        thead th:last-child {
+            border-top-right-radius: 12px;
+        }
+
+        tbody tr {
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background: #f8fafd;
+            transform: scale(1.002);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        tbody td {
+            padding: 18px 20px;
+            border-bottom: 1px solid #eee;
+            color: #555;
+            font-weight: 500;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status Badges */
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-pending {
+            background: rgba(255, 193, 7, 0.15);
+            color: #e0a800;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .badge-active {
+            background: rgba(40, 167, 69, 0.15);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .badge-completed {
+            background: rgba(23, 162, 184, 0.15);
+            color: #17a2b8;
+            border: 1px solid rgba(23, 162, 184, 0.3);
+        }
+
+        .badge-rejected {
+            background: rgba(220, 53, 69, 0.15);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+
+        .badge-banned {
+            background: rgba(108, 117, 125, 0.15);
+            color: #6c757d;
+            border: 1px solid rgba(108, 117, 125, 0.3);
+        }
+
+        /* Formulários Modernos */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e1e5eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+        }
+
+        /* Alertas Modernos */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+            border: 1px solid transparent;
+        }
+
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #155724;
+            border-color: rgba(40, 167, 69, 0.2);
+        }
+
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: #721c24;
+            border-color: rgba(220, 53, 69, 0.2);
+        }
+
+        .alert-warning {
+            background: rgba(255, 193, 7, 0.1);
+            color: #856404;
+            border-color: rgba(255, 193, 7, 0.2);
+        }
+
+        /* Modais Modernos */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .close-modal {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-modal:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Search Box Moderno */
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 20px 14px 45px;
+            border: 2px solid #e1e5eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        /* Tabs Modernos */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 25px;
+            gap: 5px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            border-radius: 8px 8px 0 0;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: var(--primary-color);
+            background: rgba(30, 60, 114, 0.05);
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Loading Spinner Moderno */
+        .loading {
+            text-align: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(30, 60, 114, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsividade */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-responsive {
+                font-size: 0.9rem;
+            }
+            
+            .btn {
+                padding: 10px 18px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                padding: 20px;
+            }
+            
+            .card-header, .card-body {
+                padding: 20px;
+            }
+            
+            .modal-content {
+                width: 95%;
+            }
+        }
+
+        /* Menu Toggle para Mobile */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 101;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 992px) {
+            .menu-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        /* Grid de Cartões */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        /* Contadores */
+        .counter {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+
+        /* Animação de entrada */
+        .fade-in {
+            animation: fadeIn 0.6s ease;
+        }
+
+        /* Scrollbar Personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.active {
+            background: #28a745;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+        }
+
+        .status-indicator.pending {
+            background: #ffc107;
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+        }
+
+        .status-indicator.inactive {
+            background: #dc3545;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+        }
+
+        /* Ações rápidas */
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu Toggle para Mobile -->
+    <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-anchor"></i>
+                    </div>
+                    <div class="logo-text">Âncora Admin</div>
+                </div>
+            </div>
+
+            <div class="nav-menu">
+                <div class="nav-item">
+                    <a href="#" class="nav-link active" onclick="showTab('dashboard')">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="showTab('usuarios')">
+                        <i class="nav-icon fas fa-users"></i>
+                        <span class="nav-text">Todos Usuários</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="showTab('saques')">
+                        <i class="nav-icon fas fa-money-bill-wave"></i>
+                        <span class="nav-text">Saques Pendentes</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="showTab('gerenciar')">
+                        <i class="nav-icon fas fa-cog"></i>
+                        <span class="nav-text">Gerenciar</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="showTab('investimentos')">
+                        <i class="nav-icon fas fa-chart-pie"></i>
+                        <span class="nav-text">Investimentos</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="showTab('depositos')">
+                        <i class="nav-icon fas fa-coins"></i>
+                        <span class="nav-text">Depósitos</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="showTab('logs')">
+                        <i class="nav-icon fas fa-history"></i>
+                        <span class="nav-text">Logs do Sistema</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div>
+                    <h1 class="page-title" id="pageTitle">
+                        <i class="fas fa-chart-line"></i>
+                        Administração
+                    </h1>
+                    <p id="currentTime" style="color: #666; margin-top: 5px;"></p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i>
+                        Atualizar
+                    </button>
+                    <button class="btn btn-danger" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Sair
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alert Message -->
+            <div id="alertMessage" class="alert"></div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <span class="stat-change change-up" id="userChange">+12%</span>
+                        </div>
+                        <div class="stat-value" id="totalUsers">0</div>
+                        <div class="stat-label">Total de Usuários</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <span class="stat-change change-up" id="balanceChange">+8%</span>
+                        </div>
+                        <div class="stat-value" id="totalBalance">0 Kz</div>
+                        <div class="stat-label">Saldo Total</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <span class="stat-change change-down" id="withdrawalChange">-3%</span>
+                        </div>
+                        <div class="stat-value" id="pendingWithdrawals">0</div>
+                        <div class="stat-label">Saques Pendentes</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <span class="stat-change change-up" id="investmentChange">+15%</span>
+                        </div>
+                        <div class="stat-value" id="activeInvestments">0</div>
+                        <div class="stat-label">Invest. Ativos</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-user-plus"></i>
+                                Usuários Recentes
+                            </h3>
+                            <button class="btn btn-sm btn-outline" onclick="loadAllUsers()">
+                                Ver Todos
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Email</th>
+                                            <th>Saldo</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentUsers">
+                                        <tr>
+                                            <td colspan="4" class="loading">
+                                                <div class="spinner"></div>
+                                                Carregando...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-clock"></i>
+                                Atividade Recente
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline" id="recentActivity">
+                                <div class="timeline-item">
+                                    <strong>Sistema iniciado</strong>
+                                    <p>Aguardando atividade...</p>
+                                    <small>Há alguns segundos</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usuários Tab -->
+            <div id="usuarios" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-users"></i>
+                            Todos os Usuários
+                        </h3>
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="searchUsers" 
+                                   placeholder="Pesquisar por nome, email ou ID..." 
+                                   onkeyup="searchAllUsers()">
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Email</th>
+                                        <th>Saldo (Kz)</th>
+                                        <th>Nível</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allUsers">
+                                    <tr>
+                                        <td colspan="6" class="loading">
+                                            <div class="spinner"></div>
+                                            Carregando usuários...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Saques Tab -->
+            <div id="saques" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-money-bill-wave"></i>
+                            Saques Pendentes
+                        </h3>
+                        <div class="quick-actions">
+                            <button class="action-btn" style="background: #28a74520; color: #28a745;" onclick="approveAllWithdrawals()">
+                                <i class="fas fa-check"></i> Aprovar Todos
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>Valor (Kz)</th>
+                                        <th>Conta Bancária</th>
+                                        <th>Data</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="withdrawalsTable">
+                                    <tr>
+                                        <td colspan="6" class="loading">
+                                            <div class="spinner"></div>
+                                            Carregando saques...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gerenciar Tab -->
+            <div id="gerenciar" class="tab-content">
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-balance-scale"></i>
+                                Controle de Saldo
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Selecione Usuário</label>
+                                <input type="text" id="userSearch" class="form-control" 
+                                       placeholder="Digite nome ou email do usuário..." 
+                                       onkeyup="searchUserForManagement()">
+                                <div id="userSearchResults" style="margin-top: 15px; max-height: 200px; overflow-y: auto;"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Valor (Kz)</label>
+                                <input type="number" id="balanceAmount" class="form-control" placeholder="Ex: 10000" min="1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Ação</label>
+                                <select id="balanceAction" class="form-control">
+                                    <option value="add">Adicionar Saldo</option>
+                                    <option value="remove">Remover Saldo</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Motivo</label>
+                                <input type="text" id="balanceReason" class="form-control" placeholder="Motivo da alteração">
+                            </div>
+                            
+                            <button class="btn btn-success" onclick="updateBalance()" style="width: 100%;">
+                                <i class="fas fa-check"></i>
+                                Aplicar Alteração
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-user-cog"></i>
+                                Gerenciar Usuário
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="selectedUserInfo" style="margin-bottom: 25px; padding: 20px; background: #f8fafd; border-radius: 12px; border: 2px dashed #e1e5eb;">
+                                <p style="color: #888; text-align: center;">
+                                    <i class="fas fa-user-slash fa-2x" style="margin-bottom: 10px;"></i><br>
+                                    Selecione um usuário primeiro
+                                </p>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Status do Usuário</label>
+                                <select id="userStatus" class="form-control" onchange="updateUserStatus()" disabled>
+                                    <option value="ativo">Ativo</option>
+                                    <option value="banido">Banido</option>
+                                    <option value="suspenso">Suspenso</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Nível do Usuário</label>
+                                <select id="userLevel" class="form-control" onchange="updateUserLevel()" disabled>
+                                    <option value="iniciante">Iniciante</option>
+                                    <option value="intermediario">Intermediário</option>
+                                    <option value="avancado">Avançado</option>
+                                    <option value="premium">Premium</option>
+                                </select>
+                            </div>
+                            
+                            <div class="quick-actions" style="margin-top: 25px;">
+                                <button class="action-btn" style="background: #ffc10720; color: #ffc107;" onclick="resetUserPassword()">
+                                    <i class="fas fa-key"></i>
+                                    Resetar Senha
+                                </button>
+                                <button class="action-btn" style="background: #dc354520; color: #dc3545;" onclick="deleteUserData()">
+                                    <i class="fas fa-trash"></i>
+                                    Excluir Dados
+                                </button>
+                                <button class="action-btn" style="background: #17a2b820; color: #17a2b8;" onclick="viewUserDetails()">
+                                    <i class="fas fa-eye"></i>
+                                    Ver Detalhes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investimentos Tab -->
+            <div id="investimentos" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Investimentos Ativos
+                        </h3>
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="searchInvestments" 
+                                   placeholder="Pesquisar investimentos..." 
+                                   onkeyup="searchInvestments()">
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>Plano</th>
+                                        <th>Investimento (Kz)</th>
+                                        <th>Lucro Diário</th>
+                                        <th>Data Início</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="investmentsTable">
+                                    <tr>
+                                        <td colspan="7" class="loading">
+                                            <div class="spinner"></div>
+                                            Carregando investimentos...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Depósitos Tab (Novo) -->
+            <div id="depositos" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-coins"></i>
+                            Depósitos Pendentes
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>Valor (Kz)</th>
+                                        <th>Método</th>
+                                        <th>Comprovante</th>
+                                        <th>Data</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="depositsTable">
+                                    <tr>
+                                        <td colspan="7" class="loading">
+                                            <div class="spinner"></div>
+                                            Carregando depósitos...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs Tab (Novo) -->
+            <div id="logs" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-history"></i>
+                            Logs do Sistema
+                        </h3>
+                        <button class="btn btn-sm btn-outline" onclick="clearLogs()">
+                            <i class="fas fa-trash"></i>
+                            Limpar Logs
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="search-box" style="margin-bottom: 20px;">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="searchLogs" 
+                                   placeholder="Pesquisar logs..." 
+                                   onkeyup="searchLogs()">
+                        </div>
+                        <div id="systemLogs" style="max-height: 500px; overflow-y: auto; padding: 15px; background: #f8fafd; border-radius: 12px;">
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <strong>Sistema iniciado</strong>
+                                    <p>Painel administrativo carregado com sucesso</p>
+                                    <small id="logTime"></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modais -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Confirmar Ação</h2>
+                <button class="close-modal" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage">Tem certeza que deseja realizar esta ação?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal()">Cancelar</button>
+                <button class="btn btn-danger" onclick="confirmAction()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="userDetailsModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Detalhes do Usuário</h2>
+                <button class="close-modal" onclick="closeUserModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="userDetailsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="investmentModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Detalhes do Investimento</h2>
+                <button class="close-modal" onclick="closeInvestmentModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="investmentContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBp8X1PPp3FqiQ6OXErr8Mu11GEp6MZ2-U",
+            authDomain: "ascend-34bf0.firebaseapp.com",
+            projectId: "ascend-34bf0",
+            storageBucket: "ascend-34bf0.firebasestorage.app",
+            messagingSenderId: "592623076677",
+            appId: "1:592623076677:web:c5615719870aefdabf6a2c"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Verificação de administrador
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                if (user.uid !== 'U1YcVUdp7vT4XIp8QF1bT0RYsaE3') {
+                    alert("Acesso Negado! Você não é o administrador.");
+                    window.location.href = "index.html";
+                } else {
+                    // Carrega dados iniciais
+                    loadDashboardData();
+                    updateTime();
+                    setInterval(updateTime, 60000);
+                    addLog('Administrador autenticado', 'success');
+                }
+            } else {
+                alert("Por favor, faça login primeiro.");
+                window.location.href = "login.html";
+            }
+        });
+
+        // Global variables
+        let allUsers = [];
+        let allWithdrawals = [];
+        let allInvestments = [];
+        let allDeposits = [];
+        let selectedUser = null;
+        let pendingAction = null;
+        let actionData = {};
+
+        // Atualizar hora
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = 
+                now.toLocaleDateString('pt-PT') + ' ' + 
+                now.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('logTime').textContent = 
+                'Há alguns segundos - ' + now.toLocaleTimeString('pt-PT');
+        }
+
+        // Toggle sidebar mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // Tab navigation
+        function showTab(tabName) {
+            // Update active tab in sidebar
+            document.querySelectorAll('.nav-link').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // Update page title
+            const titles = {
+                'dashboard': 'Dashboard',
+                'usuarios': 'Todos Usuários',
+                'saques': 'Saques Pendentes',
+                'gerenciar': 'Gerenciar Usuários',
+                'investimentos': 'Investimentos Ativos',
+                'depositos': 'Depósitos Pendentes',
+                'logs': 'Logs do Sistema'
+            };
+            document.getElementById('pageTitle').innerHTML = 
+                `<i class="fas fa-${getTabIcon(tabName)}"></i> ${titles[tabName]}`;
+            
+            // Show selected tab
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+            
+            // Load data for tab
+            switch(tabName) {
+                case 'usuarios':
+                    loadAllUsers();
+                    break;
+                case 'saques':
+                    loadWithdrawals();
+                    break;
+                case 'investimentos':
+                    loadInvestments();
+                    break;
+                case 'depositos':
+                    loadDeposits();
+                    break;
+                case 'logs':
+                    loadLogs();
+                    break;
+            }
+            
+            // Fecha sidebar no mobile
+            if (window.innerWidth <= 992) {
+                document.getElementById('sidebar').classList.remove('active');
+            }
+            
+            addLog(`Navegou para ${titles[tabName]}`, 'info');
+        }
+
+        function getTabIcon(tabName) {
+            const icons = {
+                'dashboard': 'chart-line',
+                'usuarios': 'users',
+                'saques': 'money-bill-wave',
+                'gerenciar': 'cog',
+                'investimentos': 'chart-pie',
+                'depositos': 'coins',
+                'logs': 'history'
+            };
+            return icons[tabName] || 'circle';
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                addLog('Carregando dados do dashboard', 'info');
+                
+                // Load users
+                const usersSnapshot = await db.collection('users').get();
+                allUsers = [];
+                let totalBalance = 0;
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    userData.id = doc.id;
+                    allUsers.push(userData);
+                    totalBalance += parseFloat(userData.saldo) || 0;
+                });
+                
+                // Load withdrawals
+                const withdrawalsSnapshot = await db.collection('withdrawals')
+                    .where('status', '==', 'pending')
+                    .get();
+                allWithdrawals = [];
+                
+                withdrawalsSnapshot.forEach(doc => {
+                    const withdrawal = doc.data();
+                    withdrawal.id = doc.id;
+                    allWithdrawals.push(withdrawal);
+                });
+                
+                // Load investments - AGORA INCLUI OS "PENDING" TAMBÉM
+                const investmentsSnapshot = await db.collection('investments')
+                    .get();
+                allInvestments = [];
+                
+                investmentsSnapshot.forEach(doc => {
+                    const investment = doc.data();
+                    investment.id = doc.id;
+                    allInvestments.push(investment);
+                });
+                
+                // Load deposits
+                const depositsSnapshot = await db.collection('deposits')
+                    .where('status', '==', 'pending')
+                    .get();
+                allDeposits = [];
+                
+                depositsSnapshot.forEach(doc => {
+                    const deposit = doc.data();
+                    deposit.id = doc.id;
+                    allDeposits.push(deposit);
+                });
+                
+                // Update stats
+                document.getElementById('totalUsers').textContent = allUsers.length;
+                document.getElementById('totalBalance').textContent = 
+                    totalBalance.toLocaleString('pt-PT') + ' Kz';
+                document.getElementById('pendingWithdrawals').textContent = allWithdrawals.length;
+                document.getElementById('activeInvestments').textContent = 
+                    allInvestments.filter(i => i.status === 'active').length;
+                
+                // Update recent users
+                updateRecentUsers();
+                
+                // Update withdrawals table if active
+                if (document.getElementById('saques').classList.contains('active')) {
+                    loadWithdrawals();
+                }
+                
+                // Update investments table if active
+                if (document.getElementById('investimentos').classList.contains('active')) {
+                    loadInvestments();
+                }
+                
+                // Update deposits table if active
+                if (document.getElementById('depositos').classList.contains('active')) {
+                    loadDeposits();
+                }
+                
+                addLog('Dados do dashboard carregados com sucesso', 'success');
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showAlert('Erro ao carregar dados do dashboard', 'danger');
+                addLog(`Erro ao carregar dados: ${error.message}`, 'error');
+            }
+        }
+
+        // Update recent users
+        function updateRecentUsers() {
+            const recentUsers = allUsers
+                .sort((a, b) => new Date(b.dataCadastro || 0) - new Date(a.dataCadastro || 0))
+                .slice(0, 5);
+            const recentUsersTable = document.getElementById('recentUsers');
+            
+            if (recentUsers.length === 0) {
+                recentUsersTable.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #999; padding: 30px;">
+                            <i class="fas fa-user-slash fa-2x" style="margin-bottom: 10px;"></i><br>
+                            Nenhum usuário encontrado
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            recentUsersTable.innerHTML = '';
+            
+            recentUsers.forEach(user => {
+                const isBanned = user.status === 'banido' || user.status === 'banned';
+                const statusClass = isBanned ? 'badge-banned' : 'badge-active';
+                const statusText = isBanned ? 'Banido' : 'Ativo';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <i class="fas fa-user-circle" style="margin-right: 8px; color: #666;"></i>
+                        ${user.nomeCompleto || user.email || 'N/A'}
+                    </td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td><strong>${parseFloat(user.saldo || 0).toLocaleString('pt-PT')} Kz</strong></td>
+                    <td>
+                        <span class="badge ${statusClass}">
+                            <i class="fas fa-circle" style="font-size: 8px; margin-right: 5px;"></i>
+                            ${statusText}
+                        </span>
+                    </td>
+                `;
+                recentUsersTable.appendChild(row);
+            });
+        }
+
+        // Load all users
+        async function loadAllUsers() {
+            try {
+                const usersTable = document.getElementById('allUsers');
+                usersTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="loading">
+                            <div class="spinner"></div>
+                            Carregando usuários...
+                        </td>
+                    </tr>
+                `;
+                
+                const usersSnapshot = await db.collection('users').get();
+                allUsers = [];
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    userData.id = doc.id;
+                    allUsers.push(userData);
+                });
+                
+                displayAllUsers(allUsers);
+                addLog('Lista de usuários carregada', 'success');
+                
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showAlert('Erro ao carregar usuários', 'danger');
+                addLog(`Erro ao carregar usuários: ${error.message}`, 'error');
+            }
+        }
+
+        // Display all users in table
+        function displayAllUsers(users) {
+            const usersTable = document.getElementById('allUsers');
+            
+            if (users.length === 0) {
+                usersTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #999; padding: 40px;">
+                            <i class="fas fa-user-slash fa-2x" style="margin-bottom: 15px;"></i><br>
+                            Nenhum usuário encontrado
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            usersTable.innerHTML = '';
+            
+            users.forEach(user => {
+                const isBanned = user.status === 'banido' || user.status === 'banned';
+                const isSuspended = user.status === 'suspenso' || user.status === 'suspended';
+                let statusClass = 'badge-active';
+                let statusText = 'Ativo';
+                
+                if (isBanned) {
+                    statusClass = 'badge-banned';
+                    statusText = 'Banido';
+                } else if (isSuspended) {
+                    statusClass = 'badge-pending';
+                    statusText = 'Suspenso';
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <i class="fas fa-user-circle" style="margin-right: 8px; color: #666;"></i>
+                        ${user.nomeCompleto || user.email || 'N/A'}
+                    </td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td><strong>${parseFloat(user.saldo || 0).toLocaleString('pt-PT')} Kz</strong></td>
+                    <td>
+                        <span class="badge ${user.nivel === 'premium' ? 'badge-completed' : 'badge-pending'}">
+                            ${user.nivel || 'Iniciante'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge ${statusClass}">
+                            <i class="fas fa-circle" style="font-size: 8px; margin-right: 5px;"></i>
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="quick-actions">
+                            <button class="action-btn" style="background: #17a2b820; color: #17a2b8;" 
+                                    onclick="viewUserDetails('${user.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-btn" style="background: ${isBanned ? '#28a74520' : '#ffc10720'}; color: ${isBanned ? '#28a745' : '#ffc107'};" 
+                                    onclick="toggleUserBan('${user.id}', ${!isBanned})">
+                                <i class="fas ${isBanned ? 'fa-user-check' : 'fa-user-slash'}"></i>
+                                ${isBanned ? 'Desbanir' : 'Banir'}
+                            </button>
+                        </div>
+                    </td>
+                `;
+                usersTable.appendChild(row);
+            });
+        }
+
+        // Search all users
+        function searchAllUsers() {
+            const searchTerm = document.getElementById('searchUsers').value.toLowerCase();
+            
+            if (!searchTerm) {
+                displayAllUsers(allUsers);
+                return;
+            }
+            
+            const filteredUsers = allUsers.filter(user => {
+                return (
+                    (user.nomeCompleto && user.nomeCompleto.toLowerCase().includes(searchTerm)) ||
+                    (user.email && user.email.toLowerCase().includes(searchTerm)) ||
+                    (user.id && user.id.toLowerCase().includes(searchTerm)) ||
+                    (user.userId && user.userId.toLowerCase().includes(searchTerm))
+                );
+            });
+            
+            displayAllUsers(filteredUsers);
+        }
+
+        // Load withdrawals
+        async function loadWithdrawals() {
+            try {
+                const withdrawalsTable = document.getElementById('withdrawalsTable');
+                
+                const withdrawalsSnapshot = await db.collection('withdrawals')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                allWithdrawals = [];
+                withdrawalsSnapshot.forEach(doc => {
+                    const withdrawal = doc.data();
+                    withdrawal.id = doc.id;
+                    allWithdrawals.push(withdrawal);
+                });
+                
+                displayWithdrawals(allWithdrawals.filter(w => w.status === 'pending'));
+                
+            } catch (error) {
+                console.error('Error loading withdrawals:', error);
+                showAlert('Erro ao carregar saques', 'danger');
+                addLog(`Erro ao carregar saques: ${error.message}`, 'error');
+            }
+        }
+
+        // Display withdrawals
+        function displayWithdrawals(withdrawals) {
+            const withdrawalsTable = document.getElementById('withdrawalsTable');
+            
+            if (withdrawals.length === 0) {
+                withdrawalsTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #999; padding: 40px;">
+                            <i class="fas fa-check-circle fa-2x" style="margin-bottom: 15px; color: #28a745;"></i><br>
+                            Nenhum saque pendente
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            withdrawalsTable.innerHTML = '';
+            
+            withdrawals.forEach(withdrawal => {
+                const user = allUsers.find(u => u.id === withdrawal.userId) || {};
+                const date = withdrawal.createdAt ? 
+                    (withdrawal.createdAt.toDate ? withdrawal.createdAt.toDate() : new Date(withdrawal.createdAt)) : 
+                    new Date();
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <i class="fas fa-user-circle" style="margin-right: 8px; color: #666;"></i>
+                        ${user.nomeCompleto || user.email || withdrawal.userId}
+                    </td>
+                    <td><strong>${parseFloat(withdrawal.amount || 0).toLocaleString('pt-PT')} Kz</strong></td>
+                    <td>${withdrawal.account || 'N/A'}</td>
+                    <td>${date.toLocaleDateString('pt-PT')}<br>
+                        <small>${date.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</small>
+                    </td>
+                    <td>
+                        <span class="badge badge-pending">
+                            <i class="fas fa-clock" style="margin-right: 5px;"></i>
+                            Pendente
+                        </span>
+                    </td>
+                    <td>
+                        <div class="quick-actions">
+                            <button class="action-btn" style="background: #28a74520; color: #28a745;" 
+                                    onclick="approveWithdrawal('${withdrawal.id}')">
+                                <i class="fas fa-check"></i> Aprovar
+                            </button>
+                            <button class="action-btn" style="background: #dc354520; color: #dc3545;" 
+                                    onclick="rejectWithdrawal('${withdrawal.id}')">
+                                <i class="fas fa-times"></i> Rejeitar
+                            </button>
+                        </div>
+                    </td>
+                `;
+                withdrawalsTable.appendChild(row);
+            });
+        }
+
+        // Load investments
+        async function loadInvestments() {
+            try {
+                const investmentsTable = document.getElementById('investmentsTable');
+                
+                const investmentsSnapshot = await db.collection('investments')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                allInvestments = [];
+                investmentsSnapshot.forEach(doc => {
+                    const investment = doc.data();
+                    investment.id = doc.id;
+                    allInvestments.push(investment);
+                });
+                
+                // Mostrar todos os investimentos, incluindo pendentes
+                displayInvestments(allInvestments);
+                
+            } catch (error) {
+                console.error('Error loading investments:', error);
+                showAlert('Erro ao carregar investimentos', 'danger');
+                addLog(`Erro ao carregar investimentos: ${error.message}`, 'error');
+            }
+        }
+
+        // Display investments - AGORA MOSTRA STATUS CORRETO
+        function displayInvestments(investments) {
+            const investmentsTable = document.getElementById('investmentsTable');
+            
+            if (investments.length === 0) {
+                investmentsTable.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
+                            <i class="fas fa-chart-line fa-2x" style="margin-bottom: 15px; color: #666;"></i><br>
+                            Nenhum investimento encontrado
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            investmentsTable.innerHTML = '';
+            
+            investments.forEach(investment => {
+                const user = allUsers.find(u => u.id === investment.userId) || {};
+                const date = investment.createdAt ? 
+                    (investment.createdAt.toDate ? investment.createdAt.toDate() : new Date(investment.createdAt)) : 
+                    new Date();
+                
+                // Determinar status corretamente
+                let statusClass, statusText, statusIcon;
+                const status = investment.status || 'pending';
+                
+                if (status === 'active' || status === 'ativo') {
+                    statusClass = 'badge-active';
+                    statusText = 'Ativo';
+                    statusIcon = 'play-circle';
+                } else if (status === 'pending' || status === 'pendente') {
+                    statusClass = 'badge-pending';
+                    statusText = 'Pendente';
+                    statusIcon = 'clock';
+                } else if (status === 'completed' || status === 'concluido') {
+                    statusClass = 'badge-completed';
+                    statusText = 'Concluído';
+                    statusIcon = 'check-circle';
+                } else if (status === 'rejected' || status === 'rejeitado') {
+                    statusClass = 'badge-rejected';
+                    statusText = 'Rejeitado';
+                    statusIcon = 'times-circle';
+                } else {
+                    statusClass = 'badge-pending';
+                    statusText = 'Pendente';
+                    statusIcon = 'clock';
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <i class="fas fa-user-circle" style="margin-right: 8px; color: #666;"></i>
+                        ${user.nomeCompleto || user.email || investment.userId}
+                    </td>
+                    <td><strong>${investment.planName || 'N/A'}</strong></td>
+                    <td><strong>${parseFloat(investment.investmentAmount || 0).toLocaleString('pt-PT')} Kz</strong></td>
+                    <td><strong style="color: #28a745;">${parseFloat(investment.dailyProfit || 0).toLocaleString('pt-PT')} Kz</strong></td>
+                    <td>${date.toLocaleDateString('pt-PT')}</td>
+                    <td>
+                        <span class="badge ${statusClass}">
+                            <i class="fas fa-${statusIcon}" style="margin-right: 5px;"></i>
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="quick-actions">
+                            ${status === 'pending' ? `
+                                <button class="action-btn" style="background: #28a74520; color: #28a745;" 
+                                        onclick="approveInvestment('${investment.id}')">
+                                    <i class="fas fa-check"></i> Aprovar
+                                </button>
+                                <button class="action-btn" style="background: #dc354520; color: #dc3545;" 
+                                        onclick="rejectInvestment('${investment.id}')">
+                                    <i class="fas fa-times"></i> Rejeitar
+                                </button>
+                            ` : `
+                                <button class="action-btn" style="background: #17a2b820; color: #17a2b8;" 
+                                        onclick="viewInvestmentDetails('${investment.id}')">
+                                    <i class="fas fa-eye"></i> Ver
+                                </button>
+                            `}
+                            <button class="action-btn" style="background: #dc354520; color: #dc3545;" 
+                                    onclick="deleteInvestment('${investment.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                investmentsTable.appendChild(row);
+            });
+        }
+
+        // Search investments
+        function searchInvestments() {
+            const searchTerm = document.getElementById('searchInvestments').value.toLowerCase();
+            
+            if (!searchTerm) {
+                displayInvestments(allInvestments);
+                return;
+            }
+            
+            const filteredInvestments = allInvestments.filter(investment => {
+                // Find user
+                const user = allUsers.find(u => u.id === investment.userId) || {};
+                return (
+                    (investment.planName && investment.planName.toLowerCase().includes(searchTerm)) ||
+                    (user.nomeCompleto && user.nomeCompleto.toLowerCase().includes(searchTerm)) ||
+                    (user.email && user.email.toLowerCase().includes(searchTerm)) ||
+                    (investment.id && investment.id.toLowerCase().includes(searchTerm))
+                );
+            });
+            
+            displayInvestments(filteredInvestments);
+        }
+
+        // Load deposits
+        async function loadDeposits() {
+            try {
+                const depositsTable = document.getElementById('depositsTable');
+                
+                const depositsSnapshot = await db.collection('deposits')
+                    .where('status', '==', 'pending')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                allDeposits = [];
+                depositsSnapshot.forEach(doc => {
+                    const deposit = doc.data();
+                    deposit.id = doc.id;
+                    allDeposits.push(deposit);
+                });
+                
+                displayDeposits(allDeposits);
+                
+            } catch (error) {
+                console.error('Error loading deposits:', error);
+                showAlert('Erro ao carregar depósitos', 'danger');
+                addLog(`Erro ao carregar depósitos: ${error.message}`, 'error');
+            }
+        }
+
+        // Display deposits
+        function displayDeposits(deposits) {
+            const depositsTable = document.getElementById('depositsTable');
+            
+            if (deposits.length === 0) {
+                depositsTable.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
+                            <i class="fas fa-check-circle fa-2x" style="margin-bottom: 15px; color: #28a745;"></i><br>
+                            Nenhum depósito pendente
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            depositsTable.innerHTML = '';
+            
+            deposits.forEach(deposit => {
+                const user = allUsers.find(u => u.id === deposit.userId) || {};
+                const date = deposit.createdAt ? 
+                    (deposit.createdAt.toDate ? deposit.createdAt.toDate() : new Date(deposit.createdAt)) : 
+                    new Date();
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <i class="fas fa-user-circle" style="margin-right: 8px; color: #666;"></i>
+                        ${user.nomeCompleto || user.email || deposit.userId}
+                    </td>
+                    <td><strong>${parseFloat(deposit.amount || 0).toLocaleString('pt-PT')} Kz</strong></td>
+                    <td>${deposit.method || 'N/A'}</td>
+                    <td>
+                        ${deposit.proofUrl ? 
+                            `<a href="${deposit.proofUrl}" target="_blank" class="action-btn" style="background: #17a2b820; color: #17a2b8;">
+                                <i class="fas fa-external-link-alt"></i> Ver
+                            </a>` : 
+                            'N/A'
+                        }
+                    </td>
+                    <td>${date.toLocaleDateString('pt-PT')}<br>
+                        <small>${date.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</small>
+                    </td>
+                    <td>
+                        <span class="badge badge-pending">
+                            <i class="fas fa-clock" style="margin-right: 5px;"></i>
+                            Pendente
+                        </span>
+                    </td>
+                    <td>
+                        <div class="quick-actions">
+                            <button class="action-btn" style="background: #28a74520; color: #28a745;" 
+                                    onclick="approveDeposit('${deposit.id}')">
+                                <i class="fas fa-check"></i> Aprovar
+                            </button>
+                            <button class="action-btn" style="background: #dc354520; color: #dc3545;" 
+                                    onclick="rejectDeposit('${deposit.id}')">
+                                <i class="fas fa-times"></i> Rejeitar
+                            </button>
+                        </div>
+                    </td>
+                `;
+                depositsTable.appendChild(row);
+            });
+        }
+
+        // Approve deposit
+        async function approveDeposit(depositId) {
+            try {
+                const depositRef = db.collection('deposits').doc(depositId);
+                const depositDoc = await depositRef.get();
+                
+                if (!depositDoc.exists) {
+                    showAlert('Depósito não encontrado', 'danger');
+                    return;
+                }
+                
+                const deposit = depositDoc.data();
+                
+                // Atualizar status do depósito
+                await depositRef.update({
+                    status: 'approved',
+                    approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    statusMessage: 'Depósito aprovado'
+                });
+                
+                // Adicionar saldo ao usuário
+                const userRef = db.collection('users').doc(deposit.userId);
+                await userRef.update({
+                    saldo: firebase.firestore.FieldValue.increment(deposit.amount),
+                    ultimoDeposito: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showAlert('Depósito aprovado com sucesso!', 'success');
+                addLog(`Depósito #${depositId} aprovado para ${deposit.userId}`, 'success');
+                
+                // Recarregar dados
+                loadDeposits();
+                loadDashboardData();
+                
+            } catch (error) {
+                console.error('Error approving deposit:', error);
+                showAlert('Erro ao aprovar depósito', 'danger');
+                addLog(`Erro ao aprovar depósito: ${error.message}`, 'error');
+            }
+        }
+
+        // Reject deposit
+        async function rejectDeposit(depositId) {
+            try {
+                const depositRef = db.collection('deposits').doc(depositId);
+                const depositDoc = await depositRef.get();
+                
+                if (!depositDoc.exists) {
+                    showAlert('Depósito não encontrado', 'danger');
+                    return;
+                }
+                
+                const deposit = depositDoc.data();
+                
+                // Atualizar status do depósito
+                await depositRef.update({
+                    status: 'rejected',
+                    rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    statusMessage: 'Depósito rejeitado'
+                });
+                
+                showAlert('Depósito rejeitado com sucesso!', 'success');
+                addLog(`Depósito #${depositId} rejeitado para ${deposit.userId}`, 'warning');
+                
+                // Recarregar dados
+                loadDeposits();
+                
+            } catch (error) {
+                console.error('Error rejecting deposit:', error);
+                showAlert('Erro ao rejeitar depósito', 'danger');
+                addLog(`Erro ao rejeitar depósito: ${error.message}`, 'error');
+            }
+        }
+
+        // Search user for management
+        function searchUserForManagement() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const resultsDiv = document.getElementById('userSearchResults');
+            
+            if (!searchTerm) {
+                resultsDiv.innerHTML = '';
+                selectedUser = null;
+                updateSelectedUserInfo();
+                return;
+            }
+            
+            const filteredUsers = allUsers.filter(user => {
+                return (
+                    (user.nomeCompleto && user.nomeCompleto.toLowerCase().includes(searchTerm)) ||
+                    (user.email && user.email.toLowerCase().includes(searchTerm))
+                );
+            });
+            
+            resultsDiv.innerHTML = '';
+            
+            if (filteredUsers.length === 0) {
+                resultsDiv.innerHTML = '<p style="color: #999; padding: 15px; text-align: center;">Nenhum usuário encontrado</p>';
+                return;
+            }
+            
+            filteredUsers.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-card';
+                userDiv.style.cssText = `
+                    background: white;
+                    border-radius: 12px;
+                    padding: 15px;
+                    margin-bottom: 10px;
+                    border: 2px solid #e1e5eb;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                `;
+                userDiv.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                            ${user.nomeCompleto ? user.nomeCompleto.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #333;">${user.nomeCompleto || user.email}</div>
+                            <div style="color: #666; font-size: 0.9rem;">${user.email}</div>
+                            <div style="color: #28a745; font-weight: 600; font-size: 0.9rem;">
+                                Saldo: ${parseFloat(user.saldo || 0).toLocaleString('pt-PT')} Kz
+                            </div>
+                        </div>
+                    </div>
+                `;
+                userDiv.onclick = () => {
+                    selectedUser = user;
+                    updateSelectedUserInfo();
+                    resultsDiv.innerHTML = '';
+                    document.getElementById('userSearch').value = user.nomeCompleto || user.email;
+                };
+                userDiv.onmouseover = () => {
+                    userDiv.style.borderColor = 'var(--primary-color)';
+                    userDiv.style.transform = 'translateY(-2px)';
+                    userDiv.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+                };
+                userDiv.onmouseout = () => {
+                    userDiv.style.borderColor = '#e1e5eb';
+                    userDiv.style.transform = 'translateY(0)';
+                    userDiv.style.boxShadow = 'none';
+                };
+                resultsDiv.appendChild(userDiv);
+            });
+        }
+
+        // Update selected user info
+        function updateSelectedUserInfo() {
+            const infoDiv = document.getElementById('selectedUserInfo');
+            const statusSelect = document.getElementById('userStatus');
+            const levelSelect = document.getElementById('userLevel');
+            
+            if (!selectedUser) {
+                infoDiv.innerHTML = `
+                    <p style="color: #888; text-align: center;">
+                        <i class="fas fa-user-slash fa-2x" style="margin-bottom: 10px;"></i><br>
+                        Selecione um usuário primeiro
+                    </p>
+                `;
+                statusSelect.disabled = true;
+                levelSelect.disabled = true;
+                return;
+            }
+            
+            const isBanned = selectedUser.status === 'banido' || selectedUser.status === 'banned';
+            const isSuspended = selectedUser.status === 'suspenso' || selectedUser.status === 'suspended';
+            
+            infoDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: bold;">
+                        ${selectedUser.nomeCompleto ? selectedUser.nomeCompleto.charAt(0).toUpperCase() : selectedUser.email.charAt(0).toUpperCase()}
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #333;">${selectedUser.nomeCompleto || selectedUser.email}</h4>
+                        <p style="color: #666; margin: 0 0 5px 0; font-size: 0.9rem;">${selectedUser.email}</p>
+                        <p style="color: #28a745; font-weight: 700; margin: 0;">
+                            Saldo: ${parseFloat(selectedUser.saldo || 0).toLocaleString('pt-PT')} Kz
+                        </p>
+                    </div>
+                    <span class="badge ${isBanned ? 'badge-banned' : isSuspended ? 'badge-pending' : 'badge-active'}" style="font-size: 0.8rem;">
+                        ${isBanned ? 'Banido' : isSuspended ? 'Suspenso' : 'Ativo'}
+                    </span>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e1e5eb;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem;">
+                        <div>
+                            <span style="color: #666;">ID:</span><br>
+                            <strong>${selectedUser.id.substring(0, 8)}...</strong>
+                        </div>
+                        <div>
+                            <span style="color: #666;">Nível:</span><br>
+                            <strong>${selectedUser.nivel || 'Iniciante'}</strong>
+                        </div>
+                        <div>
+                            <span style="color: #666;">Investido:</span><br>
+                            <strong>${parseFloat(selectedUser.saldoInvestido || 0).toLocaleString('pt-PT')} Kz</strong>
+                        </div>
+                        <div>
+                            <span style="color: #666;">Retirado:</span><br>
+                            <strong>${parseFloat(selectedUser.totalRetirado || 0).toLocaleString('pt-PT')} Kz</strong>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            statusSelect.disabled = false;
+            levelSelect.disabled = false;
+            
+            // Set current values
+            statusSelect.value = isBanned ? 'banido' : isSuspended ? 'suspenso' : 'ativo';
+            levelSelect.value = selectedUser.nivel || 'iniciante';
+        }
+
+        // Update user balance
+        async function updateBalance() {
+            if (!selectedUser) {
+                showAlert('Selecione um usuário primeiro', 'danger');
+                return;
+            }
+            
+            const amount = parseFloat(document.getElementById('balanceAmount').value);
+            const action = document.getElementById('balanceAction').value;
+            const reason = document.getElementById('balanceReason').value;
+            
+            if (!amount || amount <= 0) {
+                showAlert('Digite um valor válido', 'danger');
+                return;
+            }
+            
+            if (!reason.trim()) {
+                showAlert('Digite o motivo da alteração', 'danger');
+                return;
+            }
+            
+            const currentBalance = parseFloat(selectedUser.saldo) || 0;
+            let newBalance;
+            let operationType;
+            
+            if (action === 'add') {
+                newBalance = currentBalance + amount;
+                operationType = 'admin_add';
+            } else {
+                if (currentBalance < amount) {
+                    showAlert('Saldo insuficiente para remover', 'danger');
+                    return;
+                }
+                newBalance = currentBalance - amount;
+                operationType = 'admin_remove';
+            }
+            
+            try {
+                // Update user balance
+                await db.collection('users').doc(selectedUser.id).update({
+                    saldo: newBalance
+                });
+                
+                // Create transaction record
+                await db.collection('transactions').add({
+                    userId: selectedUser.id,
+                    userName: selectedUser.nomeCompleto,
+                    userEmail: selectedUser.email,
+                    type: operationType,
+                    amount: amount,
+                    previousBalance: currentBalance,
+                    newBalance: newBalance,
+                    reason: reason,
+                    adminId: 'admin_panel',
+                    adminName: 'Administrador',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Update local data
+                selectedUser.saldo = newBalance;
+                
+                // Refresh display
+                updateSelectedUserInfo();
+                loadAllUsers();
+                loadDashboardData();
+                
+                // Clear form
+                document.getElementById('balanceAmount').value = '';
+                document.getElementById('balanceReason').value = '';
+                
+                showAlert(`Saldo ${action === 'add' ? 'adicionado' : 'removido'} com sucesso!`, 'success');
+                addLog(`Saldo ${action === 'add' ? 'adicionado' : 'removido'} para ${selectedUser.email}: ${amount} Kz`, 'success');
+                
+            } catch (error) {
+                console.error('Error updating balance:', error);
+                showAlert('Erro ao atualizar saldo', 'danger');
+                addLog(`Erro ao atualizar saldo: ${error.message}`, 'error');
+            }
+        }
+
+        // Update user status
+        async function updateUserStatus() {
+            if (!selectedUser) {
+                showAlert('Selecione um usuário primeiro', 'danger');
+                return;
+            }
+            
+            const newStatus = document.getElementById('userStatus').value;
+            
+            try {
+                await db.collection('users').doc(selectedUser.id).update({
+                    status: newStatus,
+                    banDate: newStatus === 'banido' ? firebase.firestore.FieldValue.serverTimestamp() : 
+                              firebase.firestore.FieldValue.delete(),
+                    suspensionDate: newStatus === 'suspenso' ? firebase.firestore.FieldValue.serverTimestamp() : 
+                                   firebase.firestore.FieldValue.delete()
+                });
+                
+                // Update local data
+                selectedUser.status = newStatus;
+                
+                // Refresh display
+                updateSelectedUserInfo();
+                loadAllUsers();
+                loadDashboardData();
+                
+                showAlert(`Usuário ${getStatusText(newStatus)} com sucesso!`, 'success');
+                addLog(`Status do usuário ${selectedUser.email} alterado para: ${newStatus}`, 'success');
+                
+            } catch (error) {
+                console.error('Error updating user status:', error);
+                showAlert('Erro ao atualizar status do usuário', 'danger');
+                addLog(`Erro ao atualizar status: ${error.message}`, 'error');
+            }
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'ativo': 'ativado',
+                'banido': 'banido',
+                'suspenso': 'suspenso'
+            };
+            return statusMap[status] || status;
+        }
+
+        // Update user level
+        async function updateUserLevel() {
+            if (!selectedUser) {
+                showAlert('Selecione um usuário primeiro', 'danger');
+                return;
+            }
+            
+            const newLevel = document.getElementById('userLevel').value;
+            
+            try {
+                await db.collection('users').doc(selectedUser.id).update({
+                    nivel: newLevel
+                });
+                
+                // Update local data
+                selectedUser.nivel = newLevel;
+                
+                // Refresh display
+                updateSelectedUserInfo();
+                loadAllUsers();
+                
+                showAlert(`Nível do usuário atualizado para: ${newLevel}`, 'success');
+                addLog(`Nível do usuário ${selectedUser.email} alterado para: ${newLevel}`, 'success');
+                
+            } catch (error) {
+                console.error('Error updating user level:', error);
+                showAlert('Erro ao atualizar nível do usuário', 'danger');
+                addLog(`Erro ao atualizar nível: ${error.message}`, 'error');
+            }
+        }
+
+        // View user details
+        async function viewUserDetails(userId = null) {
+            try {
+                const targetUserId = userId || (selectedUser ? selectedUser.id : null);
+                
+                if (!targetUserId) {
+                    showAlert('Selecione um usuário primeiro', 'danger');
+                    return;
+                }
+                
+                const userDoc = await db.collection('users').doc(targetUserId).get();
+                if (!userDoc.exists) {
+                    showAlert('Usuário não encontrado', 'danger');
+                    return;
+                }
+                
+                const user = userDoc.data();
+                user.id = targetUserId;
+                
+                // Load user's bank details
+                const bankDetailsQuery = await db.collection('users').doc(targetUserId)
+                    .collection('bankDetails').get();
+                
+                const bankDetails = [];
+                bankDetailsQuery.forEach(doc => {
+                    bankDetails.push(doc.data());
+                });
+                
+                // Load user's investments
+                const investmentsQuery = await db.collection('investments')
+                    .where('userId', '==', targetUserId)
+                    .get();
+                
+                const investments = [];
+                investmentsQuery.forEach(doc => {
+                    investments.push(doc.data());
+                });
+                
+                // Load user's transactions
+                const transactionsQuery = await db.collection('transactions')
+                    .where('userId', '==', targetUserId)
+                    .orderBy('timestamp', 'desc')
+                    .limit(10)
+                    .get();
+                
+                const transactions = [];
+                transactionsQuery.forEach(doc => {
+                    transactions.push(doc.data());
+                });
+                
+                // Display user details
+                const contentDiv = document.getElementById('userDetailsContent');
+                const isBanned = user.status === 'banido' || user.status === 'banned';
+                const isSuspended = user.status === 'suspenso' || user.status === 'suspended';
+                
+                contentDiv.innerHTML = `
+                    <div style="background: white; border-radius: 16px; padding: 25px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
+                        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: bold;">
+                                ${user.nomeCompleto ? user.nomeCompleto.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                            </div>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 10px 0; color: var(--primary-color);">${user.nomeCompleto || user.email}</h3>
+                                <p style="margin: 0 0 5px 0; color: #666;">${user.email}</p>
+                                <p style="margin: 0; font-size: 0.9rem; color: #888;">
+                                    ID: ${targetUserId}<br>
+                                    Cadastro: ${user.dataCadastro ? new Date(user.dataCadamento).toLocaleDateString('pt-PT') : 'N/A'}
+                                </p>
+                            </div>
+                            <div>
+                                <span class="badge ${isBanned ? 'badge-banned' : isSuspended ? 'badge-pending' : 'badge-active'}" style="font-size: 1rem;">
+                                    ${isBanned ? 'Banido' : isSuspended ? 'Suspenso' : 'Ativo'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        <div style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
+                            <h4 style="margin: 0 0 15px 0; color: var(--primary-color); display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-wallet"></i> Financeiro
+                            </h4>
+                            <div style="display: grid; gap: 10px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Saldo:</span>
+                                    <strong>${parseFloat(user.saldo || 0).toLocaleString('pt-PT')} Kz</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Investido:</span>
+                                    <strong>${parseFloat(user.saldoInvestido || 0).toLocaleString('pt-PT')} Kz</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Total Ganhos:</span>
+                                    <strong style="color: #28a745;">${parseFloat(user.totalGanhos || 0).toLocaleString('pt-PT')} Kz</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Total Retirado:</span>
+                                    <strong style="color: #dc3545;">${parseFloat(user.totalRetirado || 0).toLocaleString('pt-PT')} Kz</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
+                            <h4 style="margin: 0 0 15px 0; color: var(--primary-color); display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-chart-line"></i> Estatísticas
+                            </h4>
+                            <div style="display: grid; gap: 10px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Nível:</span>
+                                    <strong>${user.nivel || 'Iniciante'}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Convites:</span>
+                                    <strong>${user.convites || 0}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Comissões:</span>
+                                    <strong style="color: #ffc107;">${parseFloat(user.totalComissoes || 0).toLocaleString('pt-PT')} Kz</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Último Acesso:</span>
+                                    <strong>${user.ultimoAcesso ? new Date(user.ultimoAcesso).toLocaleDateString('pt-PT') : 'N/A'}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${bankDetails.length > 0 ? `
+                        <div style="background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
+                            <h4 style="margin: 0 0 15px 0; color: var(--primary-color); display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-university"></i> Dados Bancários
+                            </h4>
+                            <div style="display: grid; gap: 15px;">
+                                ${bankDetails.map((bank, index) => `
+                                    <div style="background: #f8fafd; padding: 15px; border-radius: 12px; border: 1px solid #e1e5eb;">
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                            <div>
+                                                <small style="color: #666;">Banco</small>
+                                                <p style="margin: 5px 0 0 0; font-weight: 600;">${bank.banco || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <small style="color: #666;">Conta</small>
+                                                <p style="margin: 5px 0 0 0; font-weight: 600;">${bank.conta || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <small style="color: #666;">Titular</small>
+                                                <p style="margin: 5px 0 0 0; font-weight: 600;">${bank.titular || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <small style="color: #666;">IBAN</small>
+                                                <p style="margin: 5px 0 0 0; font-weight: 600;">${bank.iban || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${investments.length > 0 ? `
+                        <div style="background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
+                            <h4 style="margin: 0 0 15px 0; color: var(--primary-color); display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-chart-pie"></i> Investimentos (${investments.length})
+                            </h4>
+                            <div style="max-height: 300px; overflow-y: auto;">
+                                <div style="display: grid; gap: 10px;">
+                                    ${investments.map(inv => {
+                                        const status = inv.status || 'pending';
+                                        let statusClass = 'badge-pending';
+                                        if (status === 'active') statusClass = 'badge-active';
+                                        if (status === 'completed') statusClass = 'badge-completed';
+                                        if (status === 'rejected') statusClass = 'badge-rejected';
+                                        
+                                        return `
+                                            <div style="background: #f8fafd; padding: 15px; border-radius: 12px; border: 1px solid #e1e5eb;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                                    <strong>${inv.planName || 'Investimento'}</strong>
+                                                    <span class="badge ${statusClass}" style="font-size: 0.8rem;">
+                                                        ${status === 'active' ? 'Ativo' : status === 'pending' ? 'Pendente' : status === 'completed' ? 'Concluído' : 'Rejeitado'}
+                                                    </span>
+                                                </div>
+                                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.9rem;">
+                                                    <div>
+                                                        <small style="color: #666;">Valor</small>
+                                                        <p style="margin: 5px 0 0 0;">${parseFloat(inv.investmentAmount || 0).toLocaleString('pt-PT')} Kz</p>
+                                                    </div>
+                                                    <div>
+                                                        <small style="color: #666;">Lucro Diário</small>
+                                                        <p style="margin: 5px 0 0 0; color: #28a745;">${parseFloat(inv.dailyProfit || 0).toLocaleString('pt-PT')} Kz</p>
+                                                    </div>
+                                                    <div>
+                                                        <small style="color: #666;">Data Início</small>
+                                                        <p style="margin: 5px 0 0 0;">${inv.startDate ? new Date(inv.startDate).toLocaleDateString('pt-PT') : 'N/A'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <small style="color: #666;">Total Ganho</small>
+                                                        <p style="margin: 5px 0 0 0; color: #28a745;">${parseFloat(inv.totalProfit || 0).toLocaleString('pt-PT')} Kz</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${transactions.length > 0 ? `
+                        <div style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
+                            <h4 style="margin: 0 0 15px 0; color: var(--primary-color); display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-exchange-alt"></i> Últimas Transações
+                            </h4>
+                            <div style="max-height: 300px; overflow-y: auto;">
+                                <div style="display: grid; gap: 10px;">
+                                    ${transactions.map(trans => {
+                                        const isPositive = ['admin_add', 'investment_profit', 'commission'].includes(trans.type);
+                                        const typeText = {
+                                            'admin_add': 'Adição Admin',
+                                            'admin_remove': 'Remoção Admin',
+                                            'investment': 'Investimento',
+                                            'withdrawal': 'Saque',
+                                            'investment_profit': 'Lucro Investimento',
+                                            'commission': 'Comissão'
+                                        }[trans.type] || trans.type;
+                                        
+                                        return `
+                                            <div style="background: #f8fafd; padding: 15px; border-radius: 12px; border: 1px solid #e1e5eb;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                                    <strong>${typeText}</strong>
+                                                    <strong style="color: ${isPositive ? '#28a745' : '#dc3545'}">
+                                                        ${isPositive ? '+' : '-'}${parseFloat(trans.amount || 0).toLocaleString('pt-PT')} Kz
+                                                    </strong>
+                                                </div>
+                                                <div style="font-size: 0.85rem; color: #666;">
+                                                    <div>${trans.reason || 'Sem motivo especificado'}</div>
+                                                    <div style="margin-top: 5px;">
+                                                        ${trans.timestamp ? new Date(trans.timestamp).toLocaleDateString('pt-PT') + ' ' + new Date(trans.timestamp).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+                
+                document.getElementById('userDetailsModal').style.display = 'flex';
+                
+            } catch (error) {
+                console.error('Error loading user details:', error);
+                showAlert('Erro ao carregar detalhes do usuário', 'danger');
+                addLog(`Erro ao carregar detalhes do usuário: ${error.message}`, 'error');
+            }
+        }
+
+        // View investment details
+        async function viewInvestmentDetails(investmentId) {
+            try {
+                const investmentDoc = await db.collection('investments').doc(investmentId).get();
+                if (!investmentDoc.exists) {
+                    showAlert('Investimento não encontrado', 'danger');
+                    return;
+                }
+                
+                const investment = investmentDoc.data();
+                investment.id = investmentId;
+                
+                // Find user
+                const user = allUsers.find(u => u.id === investment.userId) || {};
+                
+                // Display investment details
+                const contentDiv = document.getElementById('investmentContent');
+                const status = investment.status || 'pending';
+                
+                let statusClass = 'badge-pending';
+                let statusText = 'Pendente';
+                if (status === 'active') {
+                    statusClass = 'badge-active';
+                    statusText = 'Ativo';
+                } else if (status === 'completed') {
+                    statusClass = 'badge-completed';
+                    statusText = 'Concluído';
+                } else if (status === 'rejected') {
+                    statusClass = 'badge-rejected';
+                    statusText = 'Rejeitado';
+                }
+                
+                const startDate = investment.startDate ? 
+                    (investment.startDate.toDate ? investment.startDate.toDate() : new Date(investment.startDate)) : 
+                    new Date();
+                
+                const lastProfitDate = investment.lastProfitDate ? 
+                    (investment.lastProfitDate.toDate ? investment.lastProfitDate.toDate() : new Date(investment.lastProfitDate)) : 
+                    null;
+                
+                contentDiv.innerHTML = `
+                    <div style="background: white; border-radius: 16px; padding: 25px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: var(--primary-color);">${investment.planName || 'Investimento'}</h3>
+                            <span class="badge ${statusClass}" style="font-size: 1rem;">
+                                ${statusText}
+                            </span>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                            <div style="background: #f8fafd; padding: 20px; border-radius: 12px; border: 1px solid #e1e5eb;">
+                                <h4 style="margin: 0 0 15px 0; color: var(--primary-color);">
+                                    <i class="fas fa-user"></i> Usuário
+                                </h4>
+                                <p style="margin: 0 0 10px 0; font-weight: 600;">${user.nomeCompleto || user.email || investment.userId}</p>
+                                <p style="margin: 0; color: #666; font-size: 0.9rem;">${user.email || 'N/A'}</p>
+                            </div>
+                            
+                            <div style="background: #f8fafd; padding: 20px; border-radius: 12px; border: 1px solid #e1e5eb;">
+                                <h4 style="margin: 0 0 15px 0; color: var(--primary-color);">
+                                    <i class="fas fa-money-bill-wave"></i> Valores
+                                </h4>
+                                <div style="display: grid; gap: 10px;">
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>Investimento:</span>
+                                        <strong>${parseFloat(investment.investmentAmount || 0).toLocaleString('pt-PT')} Kz</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>Lucro Diário:</span>
+                                        <strong style="color: #28a745;">${parseFloat(investment.dailyProfit || 0).toLocaleString('pt-PT')} Kz</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>Total Ganho:</span>
+                                        <strong style="color: #28a745;">${parseFloat(investment.totalProfit || 0).toLocaleString('pt-PT')} Kz</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #f8fafd; padding: 20px; border-radius: 12px; border: 1px solid #e1e5eb;">
+                            <h4 style="margin: 0 0 15px 0; color: var(--primary-color);">
+                                <i class="fas fa-calendar-alt"></i> Datas
+                            </h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div>
+                                    <small style="color: #666;">Data Início</small>
+                                    <p style="margin: 5px 0 0 0; font-weight: 600;">${startDate.toLocaleDateString('pt-PT')}</p>
+                                </div>
+                                ${lastProfitDate ? `
+                                    <div>
+                                        <small style="color: #666;">Último Lucro</small>
+                                        <p style="margin: 5px 0 0 0; font-weight: 600;">${lastProfitDate.toLocaleDateString('pt-PT')}</p>
+                                    </div>
+                                ` : ''}
+                                <div>
+                                    <small style="color: #666;">ID do Investimento</small>
+                                    <p style="margin: 5px 0 0 0; font-weight: 600; font-family: monospace;">${investment.id.substring(0, 12)}...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${investment.tasksCompleted !== undefined ? `
+                            <div style="background: #f8fafd; padding: 20px; border-radius: 12px; border: 1px solid #e1e5eb; margin-top: 20px;">
+                                <h4 style="margin: 0 0 15px 0; color: var(--primary-color);">
+                                    <i class="fas fa-tasks"></i> Progresso
+                                </h4>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="flex: 1;">
+                                        <div style="background: #e1e5eb; height: 10px; border-radius: 5px; overflow: hidden;">
+                                            <div style="background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); height: 100%; width: ${(investment.tasksCompleted || 0) * 50}%;"></div>
+                                        </div>
+                                    </div>
+                                    <div style="font-weight: 600;">
+                                        ${investment.tasksCompleted || 0} / 2 tarefas
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    ${status === 'pending' ? `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <button class="btn btn-success" onclick="approveInvestment('${investment.id}')" style="width: 100%;">
+                                <i class="fas fa-check"></i> Aprovar Investimento
+                            </button>
+                            <button class="btn btn-danger" onclick="rejectInvestment('${investment.id}')" style="width: 100%;">
+                                <i class="fas fa-times"></i> Rejeitar Investimento
+                            </button>
+                        </div>
+                    ` : ''}
+                `;
+                
+                document.getElementById('investmentModal').style.display = 'flex';
+                
+            } catch (error) {
+                console.error('Error loading investment details:', error);
+                showAlert('Erro ao carregar detalhes do investimento', 'danger');
+            }
+        }
+
+        // Close user modal
+        function closeUserModal() {
+            document.getElementById('userDetailsModal').style.display = 'none';
+        }
+
+        // Close investment modal
+        function closeInvestmentModal() {
+            document.getElementById('investmentModal').style.display = 'none';
+        }
+
+        // Approve withdrawal
+        async function approveWithdrawal(withdrawalId) {
+            try {
+                const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
+                const withdrawalDoc = await withdrawalRef.get();
+                
+                if (!withdrawalDoc.exists) {
+                    showAlert('Saque não encontrado', 'danger');
+                    return;
+                }
+                
+                const withdrawal = withdrawalDoc.data();
+                
+                // Update withdrawal status
+                await withdrawalRef.update({
+                    status: 'approved',
+                    approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    statusMessage: 'Saque aprovado e processado'
+                });
+                
+                // Update user's total withdrawn
+                const userRef = db.collection('users').doc(withdrawal.userId);
+                const userDoc = await userRef.get();
+                
+                if (userDoc.exists) {
+                    const user = userDoc.data();
+                    const currentWithdrawn = user.totalRetirado || 0;
+                    await userRef.update({
+                        totalRetirado: currentWithdrawn + (withdrawal.amount || 0),
+                        ultimaRetirada: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                // Show success message
+                showAlert('Saque aprovado com sucesso!', 'success');
+                addLog(`Saque #${withdrawalId} aprovado para ${withdrawal.userId}`, 'success');
+                
+                // Refresh withdrawals list
+                loadWithdrawals();
+                loadDashboardData();
+                
+            } catch (error) {
+                console.error('Error approving withdrawal:', error);
+                showAlert('Erro ao aprovar saque', 'danger');
+                addLog(`Erro ao aprovar saque: ${error.message}`, 'error');
+            }
+        }
+
+        // Reject withdrawal
+        async function rejectWithdrawal(withdrawalId) {
+            try {
+                const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
+                const withdrawalDoc = await withdrawalRef.get();
+                
+                if (!withdrawalDoc.exists) {
+                    showAlert('Saque não encontrado', 'danger');
+                    return;
+                }
+                
+                const withdrawal = withdrawalDoc.data();
+                
+                // Return amount to user balance if withdrawal was pending
+                if (withdrawal.status === 'pending') {
+                    const userRef = db.collection('users').doc(withdrawal.userId);
+                    const userDoc = await userRef.get();
+                    
+                    if (userDoc.exists) {
+                        const user = userDoc.data();
+                        const currentBalance = user.saldo || 0;
+                        await userRef.update({
+                            saldo: currentBalance + (withdrawal.amount || 0)
+                        });
+                    }
+                }
+                
+                // Update withdrawal status
+                await withdrawalRef.update({
+                    status: 'rejected',
+                    rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    statusMessage: 'Saque rejeitado pelo administrador'
+                });
+                
+                // Show success message
+                showAlert('Saque rejeitado com sucesso!', 'success');
+                addLog(`Saque #${withdrawalId} rejeitado para ${withdrawal.userId}`, 'warning');
+                
+                // Refresh withdrawals list
+                loadWithdrawals();
+                loadDashboardData();
+                
+            } catch (error) {
+                console.error('Error rejecting withdrawal:', error);
+                showAlert('Erro ao rejeitar saque', 'danger');
+                addLog(`Erro ao rejeitar saque: ${error.message}`, 'error');
+            }
+        }
+
+        // Approve all withdrawals
+        async function approveAllWithdrawals() {
+            const pendingWithdrawals = allWithdrawals.filter(w => w.status === 'pending');
+            
+            if (pendingWithdrawals.length === 0) {
+                showAlert('Não há saques pendentes para aprovar', 'warning');
+                return;
+            }
+            
+            if (!confirm(`Deseja aprovar todos os ${pendingWithdrawals.length} saques pendentes?`)) {
+                return;
+            }
+            
+            try {
+                const batch = db.batch();
+                
+                for (const withdrawal of pendingWithdrawals) {
+                    const withdrawalRef = db.collection('withdrawals').doc(withdrawal.id);
+                    batch.update(withdrawalRef, {
+                        status: 'approved',
+                        approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        statusMessage: 'Aprovado em lote'
+                    });
+                    
+                    // Update user's total withdrawn
+                    const userRef = db.collection('users').doc(withdrawal.userId);
+                    batch.update(userRef, {
+                        totalRetirado: firebase.firestore.FieldValue.increment(withdrawal.amount || 0)
+                    });
+                }
+                
+                await batch.commit();
+                
+                showAlert(`${pendingWithdrawals.length} saques aprovados com sucesso!`, 'success');
+                addLog(`${pendingWithdrawals.length} saques aprovados em lote`, 'success');
+                
+                loadWithdrawals();
+                loadDashboardData();
+                
+            } catch (error) {
+                console.error('Error approving all withdrawals:', error);
+                showAlert('Erro ao aprovar saques em lote', 'danger');
+                addLog(`Erro ao aprovar saques em lote: ${error.message}`, 'error');
+            }
+        }
+
+        // Approve investment - CORREÇÃO: AGORA O INVESTIMENTO VEM PENDENTE PARA O ADMIN
+        async function approveInvestment(investmentId) {
+            try {
+                const investmentRef = db.collection('investments').doc(investmentId);
+                const investmentDoc = await investmentRef.get();
+                
+                if (!investmentDoc.exists) {
+                    showAlert('Investimento não encontrado', 'danger');
+                    return;
+                }
+                
+                const investment = investmentDoc.data();
+                
+                // Verificar se o usuário tem saldo suficiente (já deve ter sido debitado no compra.html)
+                const userRef = db.collection('users').doc(investment.userId);
+                const userDoc = await userRef.get();
+                
+                if (userDoc.exists) {
+                    const user = userDoc.data();
+                    
+                    // Atualizar status do investimento para ativo
+                    await investmentRef.update({
+                        status: 'active',
+                        approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        startDate: firebase.firestore.FieldValue.serverTimestamp(),
+                        statusMessage: 'Investimento aprovado pelo administrador'
+                    });
+                    
+                    // Atualizar saldo investido do usuário
+                    await userRef.update({
+                        saldoInvestido: firebase.firestore.FieldValue.increment(investment.investmentAmount || 0),
+                        totalInvestimentos: firebase.firestore.FieldValue.increment(1)
+                    });
+                    
+                    // Adicionar comissão se houver referenciador
+                    if (user.convite) {
+                        await addReferralCommission(user.convite, investment.investmentAmount || 0);
+                    }
+                    
+                    // Criar transação
+                    await db.collection('transactions').add({
+                        userId: investment.userId,
+                        userName: user.nomeCompleto,
+                        userEmail: user.email,
+                        type: 'investment',
+                        amount: investment.investmentAmount || 0,
+                        previousBalance: user.saldo || 0,
+                        newBalance: (user.saldo || 0) - (investment.investmentAmount || 0),
+                        reason: `Investimento em ${investment.planName}`,
+                        investmentId: investmentId,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                showAlert('Investimento aprovado com sucesso!', 'success');
+                addLog(`Investimento #${investmentId} aprovado para ${investment.userId}`, 'success');
+                
+                // Recarregar dados
+                loadInvestments();
+                loadDashboardData();
+                
+            } catch (error) {
+                console.error('Error approving investment:', error);
+                showAlert('Erro ao aprovar investimento', 'danger');
+                addLog(`Erro ao aprovar investimento: ${error.message}`, 'error');
+            }
+        }
+
+        // Reject investment
+        async function rejectInvestment(investmentId) {
+            try {
+                const investmentRef = db.collection('investments').doc(investmentId);
+                const investmentDoc = await investmentRef.get();
+                
+                if (!investmentDoc.exists) {
+                    showAlert('Investimento não encontrado', 'danger');
+                    return;
+                }
+                
+                const investment = investmentDoc.data();
+                
+                // Devolver saldo ao usuário
+                const userRef = db.collection('users').doc(investment.userId);
+                const userDoc = await userRef.get();
+                
+                if (userDoc.exists) {
+                    const user = userDoc.data();
+                    
+                    // Devolver saldo
+                    await userRef.update({
+                        saldo: firebase.firestore.FieldValue.increment(investment.investmentAmount || 0)
+                    });
+                }
+                
+                // Atualizar status do investimento
+                await investmentRef.update({
+                    status: 'rejected',
+                    rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    statusMessage: 'Investimento rejeitado pelo administrador'
+                });
+                
+                // Criar transação de reembolso
+                await db.collection('transactions').add({
+                    userId: investment.userId,
+                    userName: userDoc.data().nomeCompleto,
+                    userEmail: userDoc.data().email,
+                    type: 'investment_refund',
+                    amount: investment.investmentAmount || 0,
+                    reason: 'Reembolso de investimento rejeitado',
+                    investmentId: investmentId,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showAlert('Investimento rejeitado e valor reembolsado!', 'success');
+                addLog(`Investimento #${investmentId} rejeitado para ${investment.userId}`, 'warning');
+                
+                // Recarregar dados
+                loadInvestments();
+                loadDashboardData();
+                
+            } catch (error) {
+                console.error('Error rejecting investment:', error);
+                showAlert('Erro ao rejeitar investimento', 'danger');
+                addLog(`Erro ao rejeitar investimento: ${error.message}`, 'error');
+            }
+        }
+
+        // Add referral commission
+        async function addReferralCommission(referrerId, amount) {
+            try {
+                // Find referrer by userId
+                const referrers = await db.collection('users')
+                    .where('userId', '==', referrerId)
+                    .get();
+                
+                if (!referrers.empty) {
+                    const referrer = referrers.docs[0];
+                    const commission = amount * 0.15; // 15% commission
+                    
+                    // Add commission to referrer
+                    await db.collection('commissions').add({
+                        referrerId: referrer.id,
+                        referredUserId: referrerId,
+                        amount: amount,
+                        commission: commission,
+                        type: 'investment',
+                        status: 'pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Update referrer's balance
+                    await db.collection('users').doc(referrer.id).update({
+                        comissoesPendentes: firebase.firestore.FieldValue.increment(commission),
+                        totalComissoes: firebase.firestore.FieldValue.increment(commission)
+                    });
+                    
+                    addLog(`Comissão de ${commission} Kz adicionada para referenciador ${referrerId}`, 'success');
+                }
+            } catch (error) {
+                console.error('Error adding commission:', error);
+                addLog(`Erro ao adicionar comissão: ${error.message}`, 'error');
+            }
+        }
+
+        // Delete investment
+        async function deleteInvestment(investmentId) {
+            if (!confirm('Tem certeza que deseja excluir este investimento? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+            
+            try {
+                // Primeiro, obter dados do investimento
+                const investmentDoc = await db.collection('investments').doc(investmentId).get();
+                if (!investmentDoc.exists) {
+                    showAlert('Investimento não encontrado', 'danger');
+                    return;
+                }
+                
+                const investment = investmentDoc.data();
+                
+                // Se o investimento estiver ativo, devolver o saldo
+                if (investment.status === 'active') {
+                    const userRef = db.collection('users').doc(investment.userId);
+                    await userRef.update({
+                        saldo: firebase.firestore.FieldValue.increment(investment.investmentAmount || 0),
+                        saldoInvestido: firebase.firestore.FieldValue.increment(-(investment.investmentAmount || 0))
+                    });
+                }
+                
+                // Agora deletar o investimento
+                await db.collection('investments').doc(investmentId).delete();
+                
+                showAlert('Investimento excluído com sucesso!', 'success');
+                addLog(`Investimento #${investmentId} excluído`, 'warning');
+                
+                loadInvestments();
+                loadDashboardData();
+                
+            } catch (error) {
+                console.error('Error deleting investment:', error);
+                showAlert('Erro ao excluir investimento', 'danger');
+                addLog(`Erro ao excluir investimento: ${error.message}`, 'error');
+            }
+        }
+
+        // Toggle user ban
+        async function toggleUserBan(userId, ban) {
+            const action = ban ? 'banir' : 'desbanir';
+            
+            if (confirm(`Tem certeza que deseja ${action} este usuário?`)) {
+                try {
+                    const newStatus = ban ? 'banido' : 'ativo';
+                    
+                    await db.collection('users').doc(userId).update({
+                        status: newStatus,
+                        banDate: ban ? firebase.firestore.FieldValue.serverTimestamp() : 
+                                  firebase.firestore.FieldValue.delete()
+                    });
+                    
+                    showAlert(`Usuário ${action} com sucesso!`, 'success');
+                    addLog(`Usuário ${userId} ${action}`, ban ? 'warning' : 'success');
+                    
+                    // Refresh data
+                    loadAllUsers();
+                    loadDashboardData();
+                    
+                    // Update selected user if applicable
+                    if (selectedUser && selectedUser.id === userId) {
+                        selectedUser.status = newStatus;
+                        updateSelectedUserInfo();
+                    }
+                    
+                } catch (error) {
+                    console.error(`Error ${action}ing user:`, error);
+                    showAlert(`Erro ao ${action} usuário`, 'danger');
+                    addLog(`Erro ao ${action} usuário: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Reset user password
+        async function resetUserPassword() {
+            if (!selectedUser) {
+                showAlert('Selecione um usuário primeiro', 'danger');
+                return;
+            }
+            
+            if (!selectedUser.email) {
+                showAlert('Usuário não tem email cadastrado', 'danger');
+                return;
+            }
+            
+            if (!confirm('Deseja enviar email de redefinição de senha para este usuário?')) {
+                return;
+            }
+            
+            try {
+                await auth.sendPasswordResetEmail(selectedUser.email);
+                showAlert('Email de redefinição de senha enviado!', 'success');
+                addLog(`Email de redefinição enviado para ${selectedUser.email}`, 'success');
+            } catch (error) {
+                console.error('Error resetting password:', error);
+                showAlert('Erro ao enviar email de redefinição', 'danger');
+                addLog(`Erro ao enviar email de redefinição: ${error.message}`, 'error');
+            }
+        }
+
+        // Delete user data
+        async function deleteUserData() {
+            if (!selectedUser) {
+                showAlert('Selecione um usuário primeiro', 'danger');
+                return;
+            }
+            
+            if (!confirm('Tem certeza que deseja excluir os dados bancários e investimentos deste usuário? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+            
+            try {
+                // Delete bank details
+                const bankDetailsQuery = await db.collection('users').doc(selectedUser.id)
+                    .collection('bankDetails').get();
+                
+                const deletePromises = [];
+                bankDetailsQuery.forEach(doc => {
+                    deletePromises.push(doc.ref.delete());
+                });
+                
+                // Delete investments
+                const investmentsQuery = await db.collection('investments')
+                    .where('userId', '==', selectedUser.id).get();
+                
+                investmentsQuery.forEach(doc => {
+                    deletePromises.push(doc.ref.delete());
+                });
+                
+                // Wait for all deletions
+                await Promise.all(deletePromises);
+                
+                // Update user's invested balance to 0
+                await db.collection('users').doc(selectedUser.id).update({
+                    saldoInvestido: 0,
+                    contaBancaria: null
+                });
+                
+                showAlert('Dados do usuário excluídos com sucesso!', 'success');
+                addLog(`Dados do usuário ${selectedUser.email} excluídos`, 'warning');
+                
+                // Refresh data
+                loadDashboardData();
+                loadInvestments();
+                
+                // Update selected user info
+                selectedUser.saldoInvestido = 0;
+                selectedUser.contaBancaria = null;
+                updateSelectedUserInfo();
+                
+            } catch (error) {
+                console.error('Error deleting user data:', error);
+                showAlert('Erro ao excluir dados do usuário', 'danger');
+                addLog(`Erro ao excluir dados do usuário: ${error.message}`, 'error');
+            }
+        }
+
+        // Load logs
+        async function loadLogs() {
+            try {
+                // Carregar logs do localStorage (simulação)
+                const logsDiv = document.getElementById('systemLogs');
+                logsDiv.innerHTML = `
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <strong>Sistema iniciado</strong>
+                            <p>Painel administrativo carregado com sucesso</p>
+                            <small>${new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</small>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading logs:', error);
+            }
+        }
+
+        // Add log
+        function addLog(message, type = 'info') {
+            const logsDiv = document.getElementById('systemLogs');
+            const timeline = logsDiv.querySelector('.timeline') || logsDiv;
+            
+            const logItem = document.createElement('div');
+            logItem.className = 'timeline-item';
+            
+            let icon = 'info-circle';
+            let color = '#17a2b8';
+            
+            if (type === 'success') {
+                icon = 'check-circle';
+                color = '#28a745';
+            } else if (type === 'warning') {
+                icon = 'exclamation-circle';
+                color = '#ffc107';
+            } else if (type === 'error') {
+                icon = 'times-circle';
+                color = '#dc3545';
+            }
+            
+            logItem.innerHTML = `
+                <strong style="color: ${color};">
+                    <i class="fas fa-${icon}" style="margin-right: 8px;"></i>
+                    ${message}
+                </strong>
+                <small>${new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</small>
+            `;
+            
+            timeline.insertBefore(logItem, timeline.firstChild);
+            
+            // Limitar a 50 logs
+            const items = timeline.querySelectorAll('.timeline-item');
+            if (items.length > 50) {
+                items[items.length - 1].remove();
+            }
+        }
+
+        // Clear logs
+        function clearLogs() {
+            if (confirm('Deseja limpar todos os logs?')) {
+                const logsDiv = document.getElementById('systemLogs');
+                logsDiv.innerHTML = `
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <strong>Logs limpos</strong>
+                            <p>Todos os logs foram removidos</p>
+                            <small>${new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</small>
+                        </div>
+                    </div>
+                `;
+                addLog('Logs do sistema limpos', 'warning');
+            }
+        }
+
+        // Search logs
+        function searchLogs() {
+            const searchTerm = document.getElementById('searchLogs').value.toLowerCase();
+            const logItems = document.querySelectorAll('.timeline-item');
+            
+            logItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // Show alert
+        function showAlert(message, type = 'success') {
+            const alertElement = document.getElementById('alertMessage');
+            alertElement.textContent = message;
+            alertElement.className = `alert alert-${type}`;
+            alertElement.style.display = 'block';
+            
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Refresh data
+        function refreshData() {
+            loadDashboardData();
+            showAlert('Dados atualizados com sucesso!', 'success');
+            addLog('Dados atualizados manualmente', 'info');
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Deseja sair do painel administrativo?')) {
+                auth.signOut().then(() => {
+                    window.location.href = 'login.html';
+                });
+            }
+        }
+
+        // Modal functions
+        function showConfirmModal(title, message, action, data = {}) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            pendingAction = action;
+            actionData = data;
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            pendingAction = null;
+            actionData = {};
+        }
+
+        function confirmAction() {
+            if (pendingAction && typeof window[pendingAction] === 'function') {
+                window[pendingAction](actionData);
+            }
+            closeModal();
+        }
+
+        // Inicializar eventos
+        document.addEventListener('DOMContentLoaded', () => {
+            // Adicionar evento de clique fora do sidebar para fechar no mobile
+            document.addEventListener('click', (e) => {
+                const sidebar = document.getElementById('sidebar');
+                const menuToggle = document.querySelector('.menu-toggle');
+                
+                if (window.innerWidth <= 992 && 
+                    sidebar.classList.contains('active') &&
+                    !sidebar.contains(e.target) && 
+                    !menuToggle.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            });
+            
+            // Atualizar estatísticas de mudança
+            updateChangeStats();
+        });
+
+        // Atualizar estatísticas de mudança
+        function updateChangeStats() {
+            // Simulação de mudanças
+            const changes = {
+                userChange: '+12%',
+                balanceChange: '+8%',
+                withdrawalChange: '-3%',
+                investmentChange: '+15%'
+            };
+            
+            Object.keys(changes).forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = changes[id];
+                }
+            });
+        }
+
+        // Adicionar atividade recente
+        function addRecentActivity(activity, time) {
+            const activityDiv = document.getElementById('recentActivity');
+            const activityItem = document.createElement('div');
+            activityItem.className = 'timeline-item';
+            activityItem.innerHTML = `
+                <strong>${activity}</strong>
+                <small>${time}</small>
+            `;
+            activityDiv.appendChild(activityItem);
+        }
+    </script>
+</body>
+</html>
